@@ -30,11 +30,24 @@ export async function getHistory(
   sessionId: string,
   limit: number = 5
 ): Promise<ChatbotResponse[]> {
-  // TODO: Execute the Cypher statement from /cypher/get-history.cypher in a read transaction
-  // TODO: Use string templating to make the limit dynamic: 0..${limit}
-  // const graph = await initGraph()
-  // const res = await graph.query<ChatbotResponse>(cypher, { sessionId }, "READ")
-  // return res
+  const graph = await initGraph();
+  const res = await graph.query<ChatbotResponse>(
+    `
+      MATCH (:Session {id: $sessionId})-[:LAST_RESPONSE]->(last)
+      MATCH path = (start)-[:NEXT*0..${limit}]->(last)
+      WHERE length(path) = 5 OR NOT EXISTS { ()-[:NEXT]->(start) }
+      UNWIND nodes(path) AS response
+      RETURN response.id AS id,
+        response.input AS input,
+        response.rephrasedQuestion AS rephrasedQuestion,
+        response.output AS output,
+        response.cypher AS cypher,
+        response.createdAt AS createdAt,
+        [ (response)-[:CONTEXT]->(n) | elementId(n) ] AS context
+    `,
+    { sessionId },
+    "READ"
+  );
 }
 // end::get[]
 
