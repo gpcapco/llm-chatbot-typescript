@@ -48,6 +48,7 @@ export async function getHistory(
     { sessionId },
     "READ"
   );
+  return res as ChatbotResponse[];
 }
 // end::get[]
 
