@@ -60,9 +60,69 @@ export async function saveHistory(
   ids: string[],
   cypher: string | null = null
 ): Promise<string> {
-  // TODO: Execute the Cypher statement from /cypher/save-response.cypher in a write transaction
-  // const graph = await initGraph()
-  // const res = await graph.query<{id: string}>(cypher, params, "WRITE")
-  // return res[0].id
+  const graph = await initGraph();
+  const res = await graph.query<{ id: string }>(
+    `
+    MERGE (session:Session { id: $sessionId }) // (1)
+
+    // <2> Create new response
+    CREATE (response:Response {
+      id: randomUuid(),
+      createdAt: datetime(),
+      source: $source,
+      input: $input,
+      output: $output,
+      rephrasedQuestion: $rephrasedQuestion,
+      cypher: $cypher,
+      ids: $ids
+    })
+    CREATE (session)-[:HAS_RESPONSE]->(response)
+
+    WITH session, response
+
+    CALL {
+    WITH session, response
+
+      // <3> Remove existing :LAST_RESPONSE relationship if it exists
+      MATCH (session)-[lrel:LAST_RESPONSE]->(last)
+      DELETE lrel
+
+      // <4? Create :NEXT relationship
+      CREATE (last)-[:NEXT]->(response)
+    }
+
+
+    // <5> Create new :LAST_RESPONSE relationship
+    CREATE (session)-[:LAST_RESPONSE]->(response)
+
+    // <6> Create relationship to context nodes
+    WITH response
+
+    CALL {
+      WITH response
+      UNWIND $ids AS id
+      MATCH (context)
+      WHERE elementId(context) = id
+      CREATE (response)-[:CONTEXT]->(context)
+
+      RETURN count(*) AS count
+    }
+
+    RETURN DISTINCT response.id AS id
+  `,
+    {
+      sessionId,
+      source,
+      input,
+      output,
+      rephrasedQuestion,
+      cypher: cypher,
+      ids,
+    },
+    "WRITE"
+  );
+
+  return res && res.length ? res[0].id : "";
+
 }
 // end::save[]
