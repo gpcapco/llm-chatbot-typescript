@@ -56,6 +56,7 @@ export default function initRephraseChain(llm: BaseChatModel) {
             )
             .join("\n");
         },
+      
       }),
       // <2> Use the input and formatted history to format the prompt
       rephraseQuestionChainPrompt,
