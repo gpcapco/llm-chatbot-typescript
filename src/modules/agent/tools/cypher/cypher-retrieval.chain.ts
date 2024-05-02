@@ -28,7 +28,7 @@ type CypherRetrievalThroughput = AgentToolInput & {
  * @param {string}            question  The rephrased question
  * @returns {string}
  */
-async function recursivelyEvaluate(
+export async function recursivelyEvaluate(
   graph: Neo4jGraph,
   llm: BaseLanguageModel,
   question: string
