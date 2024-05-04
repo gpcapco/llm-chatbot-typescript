@@ -12,6 +12,7 @@ import { Neo4jVectorStore } from "@langchain/community/vectorstores/neo4j_vector
 export default async function initVectorStore(
   embeddings: EmbeddingsInterface
 ): Promise<Neo4jVectorStore> {
+  // tag::store[]
   const vectorStore = await Neo4jVectorStore.fromExistingIndex(embeddings, {
     url: process.env.NEO4J_URI as string,
     username: process.env.NEO4J_USERNAME as string,
@@ -33,7 +34,10 @@ export default async function initVectorStore(
         } AS metadata
     `,
   });
+  // end::store[]
 
+  // tag::return[]
   return vectorStore;
+  // end::return[]
 }
 // end::function[]
