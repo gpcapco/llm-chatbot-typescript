@@ -12,16 +12,11 @@ export default async function initTools(
   embeddings: Embeddings,
   graph: Neo4jGraph
 ): Promise<DynamicStructuredTool[]> {
-  // tag::cypherchain[]
   // Initiate chains
   const cypherChain = await initCypherRetrievalChain(llm, graph);
-  // end::cypherchain[]
-  // tag::retrievalchain[]
   const retrievalChain = await initVectorRetrievalChain(llm, embeddings);
-  // end::retrievalchain[]
 
   return [
-    // tag::cypher[]
     new DynamicStructuredTool({
       name: "graph-cypher-retrieval-chain",
       description:
@@ -29,8 +24,6 @@ export default async function initTools(
       schema: AgentToolInputSchema,
       func: (input, _runManager, config) => cypherChain.invoke(input, config),
     }),
-    // end::cypher[]
-    // tag::vector[]
     new DynamicStructuredTool({
       name: "graph-vector-retrieval-chain",
       description:
@@ -39,7 +32,6 @@ export default async function initTools(
       func: (input, _runManager: any, config) =>
         retrievalChain.invoke(input, config),
     }),
-    // end::vector[]
   ];
 }
 // end::function[]
